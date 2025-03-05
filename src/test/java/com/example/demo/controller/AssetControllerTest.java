@@ -59,9 +59,10 @@ class AssetControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[1].id").value(2));
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[0].id").value(1))
+            .andExpect(jsonPath("$.data[1].id").value(2));
+
     }
 
     @Test
@@ -76,7 +77,24 @@ class AssetControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.length()").value(0));
+            .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("Test: List assets when an exception occurs")
+    void testListAssetsWithInternalServerError() throws Exception {
+        String customerId = "123";
+
+        when(assetService.listAssetsByCustomer(customerId))
+            .thenThrow(new RuntimeException("Internal server error"));
+
+        mockMvc = MockMvcBuilders.standaloneSetup(assetController).build();
+
+        mockMvc.perform(get("/api/assets/{customerId}", customerId)
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.error").value("Internal server error"));
     }
 
     @Test
@@ -92,7 +110,7 @@ class AssetControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.length()").value(0));
+            .andExpect(jsonPath("$.data.length()").value(0));
     }
 
 }
